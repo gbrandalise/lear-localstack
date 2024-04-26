@@ -6,11 +6,7 @@ Neste exemplo o LocalStack estará rodando em um container Docker dentro do WSL
 
 # Rodando o exemplo do QuickStart (Aplicacao de redimensionamento de imagens usando Lambda Functions)
 ## Pré-requisitos
-1. Seta a variavel de ambiente do AUTH_TOKEN
-```sh
-LOCALSTACK_AUTH_TOKEN="<AUTH_TOKEN>"
-```
-2. Acessa a pasta do repositório do exemplo
+1. Acessa a pasta do repositório do exemplo
 ```sh
 cd sample-serverless-image-resizer-s3-lambda
 ```
@@ -19,16 +15,12 @@ cd sample-serverless-image-resizer-s3-lambda
 ./bin/deploy.sh
 ```
 ## Depoy manual de cada servico
-1. Seta a regiao
-```sh
-export AWS_DEFAULT_REGION=us-east-1
-```
-2. Cria os buckets S3
+1. Cria os buckets S3
 ```sh
 awslocal s3 mb s3://localstack-thumbnails-app-images
 awslocal s3 mb s3://localstack-thumbnails-app-resized
 ```
-3. Adiciona o nome dos buckets ao Parameter Store para uso futuro
+2. Adiciona o nome dos buckets ao Parameter Store para uso futuro
 ```sh
 awslocal ssm put-parameter \
     --name /localstack-thumbnail-app/buckets/images \
@@ -39,7 +31,7 @@ awslocal ssm put-parameter \
     --type "String" \
     --value "localstack-thumbnails-app-resized"
 ```
-4. Cria Topico do SNS para as falhas nas chamadas dos Lambdas
+3. Cria Topico do SNS para as falhas nas chamadas dos Lambdas
 ```sh
 awslocal sns create-topic --name failed-resize-topic
 awslocal sns subscribe \
@@ -47,7 +39,7 @@ awslocal sns subscribe \
     --protocol email \
     --notification-endpoint my-email@example.com
 ```
-5. Cria o Lambda do presign
+4. Cria o Lambda do presign
 ```sh
 (cd lambdas/presign; rm -f lambda.zip; zip lambda.zip handler.py)
 awslocal lambda create-function \
@@ -63,7 +55,7 @@ awslocal lambda create-function-url-config \
     --function-name presign \
     --auth-type NONE
 ```
-6. Cria o Lambda da lista de imagens
+5. Cria o Lambda da lista de imagens
 ```sh
 (cd lambdas/list; rm -f lambda.zip; zip lambda.zip handler.py)
 awslocal lambda create-function \
@@ -79,7 +71,7 @@ awslocal lambda create-function-url-config \
     --function-name list \
     --auth-type NONE
 ```
-7. Builda a imagem (zip) do Lambda resizer
+6. Builda a imagem (zip) do Lambda resizer
 ```sh
 cd lambdas/resize
 rm -rf package lambda.zip
@@ -90,7 +82,7 @@ cd package
 zip -r ../lambda.zip *;
 cd ../../..
 ```
-8. Cria o Lambda resizer
+7. Cria o Lambda resizer
 ```sh
 awslocal lambda create-function \
     --function-name resize \
@@ -107,19 +99,19 @@ awslocal lambda put-function-event-invoke-config \
     --maximum-event-age-in-seconds 3600 \
     --maximum-retry-attempts 0
 ```
-9. Conecta o bucket S3 ao Lambda resizer
+8. Conecta o bucket S3 ao Lambda resizer
 ```sh
 awslocal s3api put-bucket-notification-configuration \
     --bucket localstack-thumbnails-app-images \
     --notification-configuration "{\"LambdaFunctionConfigurations\": [{\"LambdaFunctionArn\": \"$(awslocal lambda get-function --function-name resize | jq -r .Configuration.FunctionArn)\", \"Events\": [\"s3:ObjectCreated:*\"]}]}"
 ```
-10. Cria o website estático no S3
+9. Cria o website estático no S3
 ```sh
 awslocal s3 mb s3://webapp
 awslocal s3 sync --delete ./website s3://webapp
 awslocal s3 website s3://webapp --index-document index.html
 ```
-11. Recupera as URLs dos Lambdas
+10. Recupera as URLs dos Lambdas
 ```sh
 awslocal lambda list-function-url-configs --function-name presign | jq -r '.FunctionUrlConfigs[0].FunctionUrl'
 awslocal lambda list-function-url-configs --function-name list | jq -r '.FunctionUrlConfigs[0].FunctionUrl'
