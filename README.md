@@ -10,24 +10,13 @@ Neste exemplo o LocalStack estará rodando em um container Docker dentro do WSL
 ```sh
 LOCALSTACK_AUTH_TOKEN="<AUTH_TOKEN>"
 ```
-2. Atualiza os repositorios e instala as dependencias
+2. Acessa a pasta do repositório do exemplo
 ```sh
-apt-get update && apt-get install jq zip curl -y
-```
-3. Clone do repositório do exemplo
-```sh
-git clone https://github.com/localstack-samples/sample-serverless-image-resizer-s3-lambda.git
 cd sample-serverless-image-resizer-s3-lambda
-```
-4. Instala as dependencias do projeto web em python
-```sh
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
 ```
 ## Deploy automatizado de todos os servicos
 ```sh
-bin/deploy.sh
+./bin/deploy.sh
 ```
 ## Depoy manual de cada servico
 1. Seta a regiao
