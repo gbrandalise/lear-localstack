@@ -10,11 +10,20 @@ Neste exemplo o LocalStack estará rodando em um container Docker dentro do WSL
 ```sh
 cd ./terraform
 ```
-2. Executa o comando plan
+2. Remover os arquivos do estado do terraform
+```sh
+rm -rf *terraform* && \
+rm -rf .terraform*
+```
+3. Executa o comando init
+```sh
+tflocal init
+```
+4. Executa o comando plan
 ```sh
 tflocal plan
 ```
-3. Executa o comando apply
+5. Executa o comando apply
 ```sh
 tflocal apply
 ```
@@ -89,19 +98,9 @@ awslocal lambda create-function-url-config \
     --function-name list \
     --auth-type NONE
 ```
-7. Builda a imagem (zip) do Lambda resizer
+7. Cria o Lambda resizer
 ```sh
-cd lambdas/resize
-rm -rf package lambda.zip
-mkdir package
-pip3 install -r requirements.txt --platform manylinux2014_x86_64 --only-binary=:all: -t package
-zip lambda.zip handler.py
-cd package
-zip -r ../lambda.zip *;
-cd ../../..
-```
-8. Cria o Lambda resizer
-```sh
+(cd lambdas/resize; rm -f lambda.zip; zip lambda.zip handler.py;zip -r lambda.zip package/)
 awslocal lambda create-function \
     --function-name resize \
     --runtime python3.11 \
@@ -117,19 +116,19 @@ awslocal lambda put-function-event-invoke-config \
     --maximum-event-age-in-seconds 3600 \
     --maximum-retry-attempts 0
 ```
-9. Conecta o bucket S3 ao Lambda resizer
+8. Conecta o bucket S3 ao Lambda resizer
 ```sh
 awslocal s3api put-bucket-notification-configuration \
     --bucket localstack-thumbnails-app-images \
     --notification-configuration "{\"LambdaFunctionConfigurations\": [{\"LambdaFunctionArn\": \"$(awslocal lambda get-function --function-name resize | jq -r .Configuration.FunctionArn)\", \"Events\": [\"s3:ObjectCreated:*\"]}]}"
 ```
-10. Cria o website estático no S3
+9. Cria o website estático no S3
 ```sh
 awslocal s3 mb s3://webapp
 awslocal s3 sync --delete ./website s3://webapp
 awslocal s3 website s3://webapp --index-document index.html
 ```
-11. Recupera as URLs dos Lambdas
+10. Recupera as URLs dos Lambdas
 ```sh
 awslocal lambda list-function-url-configs --function-name presign | jq -r '.FunctionUrlConfigs[0].FunctionUrl'
 awslocal lambda list-function-url-configs --function-name list | jq -r '.FunctionUrlConfigs[0].FunctionUrl'

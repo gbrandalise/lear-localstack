@@ -10,4 +10,9 @@ RUN git clone https://github.com/localstack-samples/sample-serverless-image-resi
 RUN cd sample-serverless-image-resizer-s3-lambda && \
     python -m venv .venv && \
     source .venv/bin/activate && \
-    pip install -r requirements-dev.txt
+    pip install -r requirements-dev.txt && \
+    cd lambdas/resize && \
+    rm -rf package && \
+    mkdir package && \
+    cp handler.py package/ && \
+    pip3 install -r requirements.txt --platform manylinux2014_x86_64 --only-binary=:all: -t package
